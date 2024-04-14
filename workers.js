@@ -4,11 +4,12 @@ const {
   parentPort,
   workerData,
 } = require("worker_threads");
-
 const { generatePrimes } = require("./prime");
+const { performance } = require("perf_hooks");
 
 const threads = new Set();
 const number = 9999999;
+const startTime = performance.now();
 
 const breakIntoParts = (number, threadCount = 1) => {
   const parts = [];
@@ -42,12 +43,12 @@ if (isMainThread) {
     thread.on("exit", () => {
       threads.delete(thread);
       console.log(`Thread exiting, ${threads.size} running...`);
-    });
-    thread.on("message", (msg) => {
-      console.log(msg);
+      if (threads.size === 0) {
+        const endTime = performance.now();
+        console.log(`Execution time: ${endTime - startTime} milliseconds`);
+      }
     });
   });
-
 } else {
   const primes = generatePrimes(workerData.start, workerData.end);
   parentPort.postMessage(
